@@ -1,0 +1,52 @@
+profile:
+  description: >
+    Systems PhD research on (1) empirical performance measurement, variability,
+    reproducibility, and statistical methodology for systems experiments, and
+    (2) confidential computing with trusted execution environments.
+
+clusters:
+  - name: performance-variability
+    weight: 1.0
+    keywords: [performance variability, reproducibility, replicability, measurement bias,
+               statistical methodology, benchmarking, experiment design, hardware heterogeneity,
+               performance regression, variance]
+  - name: confidential-computing
+    weight: 1.0
+    keywords: [trusted execution environment, TEE, Intel TDX, AMD SEV-SNP, SGX, Gramine,
+               remote attestation, confidential VM, enclave, confidential computing]
+  - name: testbeds
+    weight: 0.8
+    keywords: [CloudLab, Chameleon, testbed, artifact evaluation, experiment automation]
+  - name: adjacent
+    weight: 0.4
+    keywords: [5G core, storage performance, ML systems performance, tail latency, profiling]
+
+downrank:
+  - blockchain
+  - cryptocurrency
+  - quantum computing
+  - pure NLP or computer vision models
+
+venues:
+  top: [OSDI, SOSP, EuroSys, ASPLOS, NSDI, SIGMETRICS, USENIX ATC, FAST,
+        IEEE S&P, USENIX Security, CCS, NDSS]
+  workshops: [SysTEX, HASP, CSET, HotOS, P-RECS, ACM REP]
+
+seed_papers:
+  - "Taming Performance Variability"
+  - "The Design and Operation of CloudLab"
+
+arxiv_categories: [cs.OS, cs.DC, cs.PF, cs.CR, cs.AR]
+
+blog_feeds:
+  - https://blog.cloudflare.com/rss/
+  - https://netflixtechblog.com/feed
+  - https://engineering.fb.com/feed/
+  - https://aws.amazon.com/blogs/aws/feed/
+  - https://cloudblog.withgoogle.com/rss
+  - https://www.sigops.org/feed/
+  - https://queue.acm.org/rss/feeds/queuecontent.xml
+
+limits:
+  max_candidates: 300
+  max_picks_per_day: 4

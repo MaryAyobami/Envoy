@@ -1,0 +1,30 @@
+name: weekly-feedback
+
+on:
+  schedule:
+    - cron: "0 13 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  feedback:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python -m agent.main feedback
+        env:
+          ZOTERO_API_KEY: ${{ secrets.ZOTERO_API_KEY }}
+          ZOTERO_USER_ID: ${{ secrets.ZOTERO_USER_ID }}
+      - uses: peter-evans/create-pull-request@v6
+        with:
+          branch: feedback/interest-update
+          title: "interests: fold in papers tagged keep"
+          commit-message: "interests: fold in papers tagged keep"
+          body: "Seed papers updated from Zotero feedback. Review and merge to apply."
