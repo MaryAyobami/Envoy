@@ -1,8 +1,9 @@
 profile:
   description: >
     Systems PhD research on (1) empirical performance measurement, variability,
-    reproducibility, and statistical methodology for systems experiments, and
-    (2) confidential computing with trusted execution environments.
+    reproducibility, and statistical methodology for systems experiments,
+    (2) confidential computing with trusted execution environments, and
+    (3) HPC security and supercomputing workload isolation.
 
 clusters:
   - name: performance-variability
@@ -13,7 +14,11 @@ clusters:
   - name: confidential-computing
     weight: 1.0
     keywords: [trusted execution environment, TEE, Intel TDX, AMD SEV-SNP, SGX, Gramine,
-               remote attestation, confidential VM, enclave, confidential computing]
+               remote attestation, confidential VM, enclave, confidential computing, confidential GPU]
+  - name: hpc-security
+    weight: 1.0
+    keywords: [HPC security, supercomputing security, MPI security, RDMA security, InfiniBand security,
+               multi-tenant HPC, HPC isolation, Slurm security, confidential HPC, accelerator security]
   - name: testbeds
     weight: 0.8
     keywords: [CloudLab, Chameleon, testbed, artifact evaluation, experiment automation]
@@ -29,8 +34,8 @@ downrank:
 
 venues:
   top: [OSDI, SOSP, EuroSys, ASPLOS, NSDI, SIGMETRICS, USENIX ATC, FAST,
-        IEEE S&P, USENIX Security, CCS, NDSS]
-  workshops: [SysTEX, HASP, CSET, HotOS, P-RECS, ACM REP]
+        IEEE S&P, USENIX Security, CCS, NDSS, SC, HPDC]
+  workshops: [SysTEX, HASP, CSET, HotOS, P-RECS, ACM REP, IPDPS, ICS]
 
 seed_papers:
   - "Taming Performance Variability"
