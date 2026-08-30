@@ -1,4 +1,4 @@
-# paper-agent
+# Envoy
 
 Daily reading recommendations for systems researchers. Pulls new papers from arXiv, Semantic Scholar recommendations, and tech-blog feeds; ranks them against an interest profile using fast open-weights LLMs via Groq (Llama 3.3 70B); emails a short digest; and files each pick into a Zotero collection ready to read.
 

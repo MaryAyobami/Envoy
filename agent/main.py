@@ -36,7 +36,7 @@ def feedback() -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(prog="paper-agent")
+    parser = argparse.ArgumentParser(prog="envoy")
     parser.add_argument("command", choices=["digest", "feedback"])
     args = parser.parse_args()
     digest() if args.command == "digest" else feedback()
