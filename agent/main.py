@@ -1,7 +1,5 @@
 import argparse
 
-import anthropic
-
 from . import config, notify, rank, store, zotero
 from .sources import arxiv, blogs, semantic_scholar
 
@@ -21,7 +19,7 @@ def digest() -> None:
     if not fresh:
         return
 
-    client = anthropic.Anthropic()
+    client = rank.get_client()
     picks = rank.rank(client, interests, fresh, interests["limits"]["max_picks_per_day"])
 
     if picks:
