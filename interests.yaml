@@ -2,8 +2,8 @@ profile:
   description: >
     Systems PhD research on (1) empirical performance measurement, variability,
     reproducibility, and statistical methodology for systems experiments,
-    (2) confidential computing with trusted execution environments, and
-    (3) HPC security and supercomputing workload isolation.
+    (2) confidential computing, verifiable trust, and privacy-preserving systems,
+    and (3) cloud & HPC security, multi-tenant workload isolation, and trusted execution environments.
 
 clusters:
   - name: performance-variability
@@ -15,10 +15,16 @@ clusters:
     weight: 1.0
     keywords: [trusted execution environment, TEE, Intel TDX, AMD SEV-SNP, SGX, Gramine,
                remote attestation, confidential VM, enclave, confidential computing, confidential GPU]
-  - name: hpc-security
+  - name: cloud-and-hpc-security
     weight: 1.0
-    keywords: [HPC security, supercomputing security, MPI security, RDMA security, InfiniBand security,
-               multi-tenant HPC, HPC isolation, Slurm security, confidential HPC, accelerator security]
+    keywords: [cloud security, HPC security, supercomputing security, multi-tenant isolation,
+               hypervisor security, microVM, Firecracker, container security, MPI security,
+               RDMA security, InfiniBand security, Slurm security, serverless security, confidential cloud]
+  - name: verifiable-trust-and-privacy
+    weight: 1.0
+    keywords: [verifiable trust, verifiable computing, privacy-preserving systems, data privacy,
+               differential privacy, root of trust, TPM, transparent attestation, authenticated data structures,
+               supply chain security, trusted computing, integrity verification]
   - name: testbeds
     weight: 0.8
     keywords: [CloudLab, Chameleon, testbed, artifact evaluation, experiment automation]
@@ -34,8 +40,8 @@ downrank:
 
 venues:
   top: [OSDI, SOSP, EuroSys, ASPLOS, NSDI, SIGMETRICS, USENIX ATC, FAST,
-        IEEE S&P, USENIX Security, CCS, NDSS, SC, HPDC]
-  workshops: [SysTEX, HASP, CSET, HotOS, P-RECS, ACM REP, IPDPS, ICS]
+        IEEE S&P, USENIX Security, CCS, NDSS, PETS, SoCC, SC, HPDC]
+  workshops: [SysTEX, HASP, CSET, HotOS, P-RECS, ACM REP, IPDPS, ICS, HotCloud, HotStorage]
 
 seed_papers:
   - "Taming Performance Variability"
