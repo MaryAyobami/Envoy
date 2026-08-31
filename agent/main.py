@@ -1,7 +1,7 @@
 import argparse
 
 from . import config, notify, rank, store, zotero
-from .sources import arxiv, blogs, semantic_scholar
+from .sources import arxiv, blogs, conferences, semantic_scholar
 
 
 def digest() -> None:
@@ -10,11 +10,12 @@ def digest() -> None:
     failures: list[str] = []
 
     candidates = arxiv.fetch(interests["arxiv_categories"])
+    conf_papers, conf_failures = conferences.fetch(interests.get("venues", {}).get("top", []))
     posts, blog_failures = blogs.fetch(interests["blog_feeds"])
     recs, s2_failures = semantic_scholar.recommendations(interests["seed_papers"])
-    failures.extend(blog_failures + s2_failures)
+    failures.extend(conf_failures + blog_failures + s2_failures)
 
-    fresh = store.unseen(candidates + posts + recs, seen)
+    fresh = store.unseen(conf_papers + candidates + posts + recs, seen)
     fresh = fresh[: interests["limits"]["max_candidates"]]
     if not fresh:
         return
