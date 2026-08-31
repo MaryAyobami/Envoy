@@ -20,11 +20,11 @@ clusters:
     keywords: [cloud security, HPC security, supercomputing security, multi-tenant isolation,
                hypervisor security, microVM, Firecracker, container security, MPI security,
                RDMA security, InfiniBand security, Slurm security, serverless security, confidential cloud]
-  - name: verifiable-trust-and-privacy
+  - name: verifiable-trust-and-attestation
     weight: 1.0
-    keywords: [verifiable trust, verifiable computing, privacy-preserving systems, data privacy,
-               differential privacy, root of trust, TPM, transparent attestation, authenticated data structures,
-               supply chain security, trusted computing, integrity verification]
+    keywords: [remote attestation, hardware root of trust, TPM, confidential VM attestation,
+               trusted execution environment, trusted computing base, systems integrity verification,
+               enclave attestation, verifiable systems, confidential computing privacy]
   - name: testbeds
     weight: 0.8
     keywords: [CloudLab, Chameleon, testbed, artifact evaluation, experiment automation]
@@ -33,10 +33,11 @@ clusters:
     keywords: [5G core, storage performance, ML systems performance, tail latency, profiling]
 
 downrank:
-  - blockchain
-  - cryptocurrency
+  - pure or theoretical cryptography (proof systems, zero-knowledge proofs without systems evaluation, cipher design, signature math)
+  - blockchain, cryptocurrency, web3, and smart contracts
   - quantum computing
-  - pure NLP or computer vision models
+  - pure machine learning, NLP, or computer vision architectures (unless focused on systems performance, testbeds, or confidential AI)
+  - theoretical network routing without systems, cloud, or HPC focus
 
 venues:
   top: [OSDI, SOSP, EuroSys, ASPLOS, NSDI, SIGMETRICS, USENIX ATC, FAST,

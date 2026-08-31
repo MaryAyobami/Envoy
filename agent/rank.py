@@ -7,17 +7,37 @@ import groq
 DEFAULT_MODEL = "openai/gpt-oss-120b"
 CHUNK_SIZE = 25
 
-PROMPT = """You select daily reading for a systems PhD student. Their interest profile:
+PROMPT_TEMPLATE = """You are a rigorous literature recommender for a computer systems PhD researcher.
 
-{interests}
+RESEARCH PROFILE:
+__PROFILE__
 
-Candidate papers and posts (id, title, abstract):
+WEIGHTED RESEARCH CLUSTERS:
+__CLUSTERS__
 
-{candidates}
+ANCHOR SEED PAPERS:
+__SEEDS__
 
-Pick the {max_picks} most valuable items for this specific researcher. Prefer items matching
-high-weight clusters and top venues; apply the downrank list. Respond with ONLY a JSON object with a "picks" array:
-{{"picks": [{{"id": "<candidate id>", "score": <1-10>, "note": "<two sentences on why this matters to THEIR work, not a generic summary>"}}]}}"""
+TRACKED CONFERENCES & VENUES:
+__VENUES__
+
+EXPLICIT DOWNRANK / EXCLUSION LIST:
+__DOWNRANK__
+
+CRITICAL FILTERING RULES:
+- Reject pure or theoretical cryptography (proof systems, zero-knowledge math, cipher/signature schemes) unless it involves a concrete systems implementation, hardware TEE (TDX/SEV-SNP/SGX), or cloud/HPC workload evaluation.
+- Reject blockchain, cryptocurrency, web3, and smart contract papers.
+- Reject pure ML/NLP/CV model architectures that do not focus on systems performance, testbeds, or hardware acceleration.
+- Only select candidates that directly advance the primary pillars: Empirical performance variability/methodology, Confidential computing/TEEs, or Cloud/HPC workload security.
+
+Candidate papers and posts:
+__CANDIDATES__
+
+Pick at most __MAX_PICKS__ papers that score >= 8 on relevance to this researcher's specific systems agenda.
+If no papers in this batch meet this high bar, return an empty array {"picks": []}.
+
+Respond with ONLY a JSON object:
+{"picks": [{"id": "<candidate id>", "score": <1-10>, "note": "<two sentences specifically explaining the direct connection to performance variability, TEEs, testbeds, or cloud/HPC security>"}]}"""
 
 
 def get_client() -> groq.Groq:
@@ -27,24 +47,30 @@ def get_client() -> groq.Groq:
     return groq.Groq(api_key=api_key)
 
 
-def _rank_chunk(client: groq.Groq, model: str, interests_json: str, chunk: list[dict], max_picks: int) -> list[dict]:
+def _build_prompt(interests: dict, chunk: list[dict], max_picks: int) -> str:
     listing = "\n".join(
         f"- {c['id']} | {c['title']} | {c['abstract'][:500]}" for c in chunk
     )
+    return (
+        PROMPT_TEMPLATE
+        .replace("__PROFILE__", json.dumps(interests.get("profile", {})))
+        .replace("__CLUSTERS__", json.dumps(interests.get("clusters", [])))
+        .replace("__SEEDS__", json.dumps(interests.get("seed_papers", [])))
+        .replace("__VENUES__", json.dumps(interests.get("venues", {})))
+        .replace("__DOWNRANK__", json.dumps(interests.get("downrank", [])))
+        .replace("__CANDIDATES__", listing)
+        .replace("__MAX_PICKS__", str(max_picks))
+    )
+
+
+def _rank_chunk(client: groq.Groq, model: str, prompt_text: str, chunk: list[dict]) -> list[dict]:
     for attempt in range(4):
         try:
             chat_completion = client.chat.completions.create(
                 model=model,
-                messages=[{
-                    "role": "user",
-                    "content": PROMPT.format(
-                        interests=interests_json,
-                        candidates=listing,
-                        max_picks=max_picks,
-                    ),
-                }],
+                messages=[{"role": "user", "content": prompt_text}],
                 response_format={"type": "json_object"},
-                temperature=0.2,
+                temperature=0.1,
             )
             raw = chat_completion.choices[0].message.content.strip()
             data = json.loads(raw)
@@ -61,7 +87,7 @@ def _rank_chunk(client: groq.Groq, model: str, interests_json: str, chunk: list[
             return [
                 {**by_id[p["id"]], "score": p.get("score", 8), "note": p.get("note", "")}
                 for p in picks
-                if isinstance(p, dict) and p.get("id") in by_id
+                if isinstance(p, dict) and p.get("id") in by_id and p.get("score", 0) >= 7
             ]
         except (groq.RateLimitError, groq.APIStatusError):
             if attempt < 3:
@@ -75,15 +101,16 @@ def rank(client: groq.Groq, interests: dict, candidates: list[dict], max_picks: 
     if not candidates:
         return []
     model = os.environ.get("GROQ_MODEL") or os.environ.get("LLM_MODEL") or DEFAULT_MODEL
-    interests_json = json.dumps({k: interests[k] for k in ("clusters", "downrank", "venues")})
 
     if len(candidates) <= CHUNK_SIZE:
-        return _rank_chunk(client, model, interests_json, candidates, max_picks)
+        prompt_text = _build_prompt(interests, candidates, max_picks)
+        return _rank_chunk(client, model, prompt_text, candidates)
 
     all_picks = []
     for i in range(0, len(candidates), CHUNK_SIZE):
         chunk = candidates[i:i + CHUNK_SIZE]
-        chunk_picks = _rank_chunk(client, model, interests_json, chunk, max_picks=max_picks)
+        prompt_text = _build_prompt(interests, chunk, max_picks)
+        chunk_picks = _rank_chunk(client, model, prompt_text, chunk)
         all_picks.extend(chunk_picks)
         time.sleep(0.5)
 
