@@ -7,9 +7,16 @@ BASE = "https://api.zotero.org"
 TIMEOUT = 30
 
 
+def is_configured() -> bool:
+    return bool(os.environ.get("ZOTERO_USER_ID", "").strip() and os.environ.get("ZOTERO_API_KEY", "").strip())
+
+
 def _auth() -> tuple[str, dict]:
-    user_id = os.environ["ZOTERO_USER_ID"]
-    headers = {"Zotero-API-Key": os.environ["ZOTERO_API_KEY"]}
+    user_id = os.environ.get("ZOTERO_USER_ID", "").strip()
+    api_key = os.environ.get("ZOTERO_API_KEY", "").strip()
+    if not user_id or not api_key:
+        raise ValueError("Zotero credentials (ZOTERO_USER_ID, ZOTERO_API_KEY) are not configured.")
+    headers = {"Zotero-API-Key": api_key}
     return user_id, headers
 
 
@@ -43,9 +50,13 @@ def _resolve_month_collection(user_id: str, headers: dict, parent_key: str, coll
     # Auto-create new month subcollection under parent if not found
     new_name = now.strftime("%B %y'")
     try:
+        payload = [{"name": new_name}]
+        if parent_key:
+            payload[0]["parentCollection"] = parent_key
+
         create_resp = requests.post(
             f"{BASE}/users/{user_id}/collections",
-            json=[{"name": new_name, "parentCollection": parent_key}],
+            json=payload,
             headers=headers,
             timeout=TIMEOUT,
         )
@@ -61,7 +72,14 @@ def _resolve_month_collection(user_id: str, headers: dict, parent_key: str, coll
 
 
 def push(picks: list[dict]) -> list[str]:
-    user_id, headers = _auth()
+    if not is_configured():
+        return []
+
+    try:
+        user_id, headers = _auth()
+    except Exception as e:
+        return [str(e)]
+
     parent_key = os.environ.get("ZOTERO_COLLECTION", "").strip()
 
     collections = _get_collections_map(user_id, headers) if parent_key else []
@@ -79,32 +97,49 @@ def push(picks: list[dict]) -> list[str]:
             if topic_words and all(w in text for w in topic_words):
                 target_cols.append(sub["data"]["key"])
 
+        creators = []
+        for name in pick.get("authors", [])[:20]:
+            if name:
+                creators.append({"creatorType": "author", "name": name})
+
         items.append({
             "itemType": "journalArticle",
             "title": pick["title"],
-            "creators": [
-                {"creatorType": "author", "name": name} for name in pick["authors"][:20]
-            ],
-            "abstractNote": pick["abstract"][:5000],
-            "url": pick["url"],
-            "extra": f"source: {pick['source']} | agent score: {pick.get('score', '')}",
-            "collections": list(set(target_cols)),
+            "creators": creators,
+            "abstractNote": pick.get("abstract", "")[:5000],
+            "url": pick.get("url", ""),
+            "extra": f"source: {pick.get('source', '')} | agent score: {pick.get('score', '')}",
+            "collections": [c for c in set(target_cols) if c],
             "tags": [{"tag": "agent-inbox"}],
         })
-    response = requests.post(
-        f"{BASE}/users/{user_id}/items", json=items, headers=headers, timeout=TIMEOUT
-    )
-    response.raise_for_status()
-    failed = response.json().get("failed", {})
-    return [f"{items[int(i)]['title']}: {err['message']}" for i, err in failed.items()]
+
+    if not items:
+        return []
+
+    try:
+        response = requests.post(
+            f"{BASE}/users/{user_id}/items", json=items, headers=headers, timeout=TIMEOUT
+        )
+        if response.status_code not in (200, 201):
+            return [f"Zotero push returned HTTP {response.status_code}: {response.text[:200]}"]
+        failed = response.json().get("failed", {})
+        return [f"{items[int(i)]['title']}: {err.get('message', 'Failed to add')}" for i, err in failed.items() if int(i) < len(items)]
+    except requests.RequestException as e:
+        return [f"Zotero push failed: {e}"]
 
 
 def liked_titles(tag: str = "keep", limit: int = 50) -> list[str]:
-    user_id, headers = _auth()
-    response = requests.get(
-        f"{BASE}/users/{user_id}/items",
-        params={"tag": tag, "limit": limit, "sort": "dateAdded", "direction": "desc"},
-        headers=headers, timeout=TIMEOUT,
-    )
-    response.raise_for_status()
-    return [item["data"]["title"] for item in response.json() if item["data"].get("title")]
+    if not is_configured():
+        return []
+    try:
+        user_id, headers = _auth()
+        response = requests.get(
+            f"{BASE}/users/{user_id}/items",
+            params={"tag": tag, "limit": limit, "sort": "dateAdded", "direction": "desc"},
+            headers=headers, timeout=TIMEOUT,
+        )
+        if response.status_code != 200:
+            return []
+        return [item["data"]["title"] for item in response.json() if item.get("data", {}).get("title")]
+    except Exception:
+        return []
